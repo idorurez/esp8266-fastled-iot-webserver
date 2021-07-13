@@ -787,7 +787,7 @@ void setup() {
         wifiMangerPortalRunning = true;
     }
 
-//    if (!wifiManager.autoConnect("whitefox", "happilyeverafter")) {
+//    if (!wifiManager.autoConnect("ssid", "blahblah")) {
 //      Serial.println("failed to connect and hit timeout");
 //      delay(3000);
 //      // if we still have not connected restart and try all over again
