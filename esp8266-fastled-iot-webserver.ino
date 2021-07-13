@@ -60,18 +60,18 @@ extern "C" {
 
 /*######################## MAIN CONFIG ########################*/
 #define LED_TYPE            WS2812B                     // You might also use a WS2811 or any other strip that is Fastled compatible 
-#define DATA_PIN            D3                          // Be aware: the pin mapping might be different on boards like the NodeMCU
+#define DATA_PIN            D4                          // Be aware: the pin mapping might be different on boards like the NodeMCU
 //#define CLK_PIN             D5                        // Only required when using 4-pin SPI-based LEDs
 #define CORRECTION          UncorrectedColor            // If colors are weird use TypicalLEDStrip
 #define COLOR_ORDER         GRB                         // Change this if colors are swapped (in my case, red was swapped with green)
-#define MILLI_AMPS          10000                       // IMPORTANT: set the max milli-Amps of your power supply (4A = 4000mA)
+#define MILLI_AMPS          8000                       // IMPORTANT: set the max milli-Amps of your power supply (4A = 4000mA)
 #define VOLTS               5                           // Voltage of the Power Supply
 
 #define LED_DEBUG 0                     // enable debug messages on serial console, set to 0 to disable debugging
 
-#define DEFAULT_HOSTNAME "LEDs"         // Name that appears in your network, don't use whitespaces, use "-" instead
+#define DEFAULT_HOSTNAME "hexleaf"         // Name that appears in your network, don't use whitespaces, use "-" instead
 
-#define LED_DEVICE_TYPE 0               // The following types are available
+#define LED_DEVICE_TYPE 4               // The following types are available
 
 /*
     0: Generic LED-Strip: a regular LED-Strip without any special arrangement (and Infinity Mirror + Bottle Lighting Pad)
@@ -134,7 +134,7 @@ extern "C" {
 
 #elif LED_DEVICE_TYPE == 4              // Nanoleafs
     #define LEAFCOUNT 12                // Amount of triangles
-    #define PIXELS_PER_LEAF 12          // Amount of LEDs inside 1x Tringle
+    #define PIXELS_PER_LEAF 39          // Amount of LEDs inside 1x Tringle
 
 #elif LED_DEVICE_TYPE == 5              // Animated Logos
     // Choose your logo below, remove the comment in front of your design
@@ -162,10 +162,10 @@ extern "C" {
 
     //#define ENABLE_SERIAL_AMBILIGHT           // allows to function as an ambilight behind a monitor by using data from usb-serial (integration of adalight)
 
-    //#define ENABLE_MQTT_SUPPORT               // allows integration in homeassistant/googlehome/mqtt
+    #define ENABLE_MQTT_SUPPORT               // allows integration in homeassistant/googlehome/mqtt
                                                 // mqtt server required, see MQTT Configuration for more, implemented by GitHub/WarDrake
 
-    //#define ENABLE_UDP_VISUALIZATION          // allows to sync the LEDs with pc-music using https://github.com/NimmLor/IoT-Audio-Visualization-Center
+    #define ENABLE_UDP_VISUALIZATION          // allows to sync the LEDs with pc-music using https://github.com/NimmLor/IoT-Audio-Visualization-Center
 
     //#define ENABLE_HOMEY_SUPPORT              // Add support for Homey integration (Athom Homey library required)
 
@@ -755,10 +755,23 @@ void setup() {
     char nameChar[nameString.length() + 1];
     nameString.toCharArray(nameChar, sizeof(nameChar));
 
+    char static_ip[16] = "192.168.1.205";
+    char static_gw[16] = "192.168.1.1";
+    char static_sn[16] = "255.255.255.0";
+
     // setup wifiManager
     wifiManager.setHostname(cfg.hostname); // set hostname
     wifiManager.setConfigPortalBlocking(false); // config portal is not blocking (LEDs light up in AP mode)
     wifiManager.setSaveConfigCallback(handleReboot); // after the wireless settings have been saved a reboot will be performed
+
+    Serial.printf("Hostname: %s", cfg.hostname);
+
+    IPAddress _ip,_gw,_sn;
+    _ip.fromString(static_ip);
+    _gw.fromString(static_gw);
+    _sn.fromString(static_sn);
+    wifiManager.setSTAStaticIPConfig(_ip, _gw, _sn);
+    
     #if LED_DEBUG != 0
         wifiManager.setDebugOutput(true);
     #else
@@ -770,9 +783,17 @@ void setup() {
     if (wifiManager.autoConnect(nameChar)) {
         Serial.println("INFO: Wi-Fi connected");
     } else {
-        Serial.printf("INFO: Wi-Fi manager portal running. Connect to the Wi-Fi AP '%s' to configure your wireless connection\n", nameChar);
+        Serial.printf("Could not connect %s,\n INFO: Wi-Fi manager portal running. Connect to the Wi-Fi AP '%s' to configure your wireless connection\n", cfg.hostname, nameChar);
         wifiMangerPortalRunning = true;
     }
+
+//    if (!wifiManager.autoConnect("whitefox", "happilyeverafter")) {
+//      Serial.println("failed to connect and hit timeout");
+//      delay(3000);
+//      // if we still have not connected restart and try all over again
+//      ESP.restart();
+//      delay(5000);
+//    }
 
     // FS debug information
     // THIS NEEDS TO BE PAST THE WIFI SETUP!! OTHERWISE WIFI SETUP WILL BE DELAYED
